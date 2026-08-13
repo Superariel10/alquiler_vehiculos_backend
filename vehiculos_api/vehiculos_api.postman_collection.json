@@ -1,0 +1,317 @@
+{
+  "info": {
+    "_postman_id": "b2d2c3f0-aaaa-bbbb-cccc-123456789000",
+    "name": "Alquiler Vehiculos API (Django + Postgres + JWT + Mongo)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://127.0.0.1:8000" },
+    { "key": "accessToken", "value": "" },
+    { "key": "refreshToken", "value": "" },
+    { "key": "serviceTypeId", "value": "" },
+    { "key": "vehicleServiceId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register (Public) - POST /api/auth/register/",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/register/", "host": ["{{baseUrl}}"], "path": ["api", "auth", "register", ""] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"user1\",\n  \"email\": \"user1@mail.com\",\n  \"password\": \"123456\"\n}"
+            }
+          }
+        },
+        {
+            "name": "Login (JWT) - POST /api/auth/login/ (save tokens)",
+            "event": [
+                {
+                "listen": "test",
+                "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                    "let jsonData = {};",
+                    "try { jsonData = pm.response.json(); } catch (e) {}",
+                    "",
+                    "if (jsonData.access) {",
+                    "  pm.collectionVariables.set('accessToken', jsonData.access);",
+                    "  pm.environment.set('accessToken', jsonData.access);",
+                    "}",
+                    "",
+                    "if (jsonData.refresh) {",
+                    "  pm.collectionVariables.set('refreshToken', jsonData.refresh);",
+                    "  pm.environment.set('refreshToken', jsonData.refresh);",
+                    "}",
+                    "",
+                    "pm.test('Token access recibido', function () {",
+                    "  pm.expect(jsonData.access).to.be.a('string');",
+                    "});"
+                    ]
+                }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                { "key": "Content-Type", "value": "application/json" }
+                ],
+                "url": { "raw": "{{baseUrl}}/api/auth/login/", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login", ""] },
+                "body": {
+                "mode": "raw",
+                "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin\"\n}"
+                }
+            }
+        },
+        {
+          "name": "Refresh (JWT) - POST /api/auth/refresh/ (save access)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let jsonData = {};",
+                  "try { jsonData = pm.response.json(); } catch (e) {}",
+                  "if (jsonData.access) pm.collectionVariables.set('accessToken', jsonData.access);",
+                  "pm.test('Token access refrescado', function () { pm.expect(jsonData.access).to.be.a('string'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/refresh/", "host": ["{{baseUrl}}"], "path": ["api", "auth", "refresh", ""] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh\": \"{{refreshToken}}\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Postgres - Vehiculos",
+      "item": [
+        {
+          "name": "List vehiculos (Admin token) - GET /api/vehiculos/",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/vehiculos/", "host": ["{{baseUrl}}"], "path": ["api", "vehiculos", ""] }
+          }
+        },
+        {
+          "name": "Create vehiculo (Admin) - POST /api/vehiculos/",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/vehiculos/", "host": ["{{baseUrl}}"], "path": ["api", "vehiculos", ""] },
+            "body": { "mode": "raw", "raw": "{\n  \"id_vehiculo\": 1,\n  \"plate\": \"PDF-5874\",\n  \"brand\": \"Toyota\",\n  \"daily_rate\": 50.0,\n  \"is_available\": \"true\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Postgres - Alquileres",
+      "item": [
+        {
+          "name": "List alquileres (Public) - GET /api/alquiler/",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/alquiler/", "host": ["{{baseUrl}}"], "path": ["api", "alquiler", ""] }
+          }
+        },
+        {
+          "name": "Create alquileres (Admin) - POST /api/alquiler/",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/alquiler/", "host": ["{{baseUrl}}"], "path": ["api", "alquiler", ""] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_alquiler\": 1, \n \"id_vehiculo\": 1,\n  \"customer_name\": \"Ariel\",\n  \"total\": 20000,\n  \"status\": \"Nuevo\",\n  \"created_at\": \"2023-01-01T00:00:00Z\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Mongo - rental_events",
+      "item": [
+        {
+          "name": "List rental events (Auth) - GET /api/rental_events/",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/rental_events/", "host": ["{{baseUrl}}"], "path": ["api", "rental_events", ""] }
+          }
+        },
+        {
+          "name": "Create rental events (Auth) - POST /api/rental_events/ (save rentalEventId)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let jsonData = {};",
+                  "try { jsonData = pm.response.json(); } catch (e) {}",
+                  "if (jsonData.id) pm.collectionVariables.set('serviceTypeId', jsonData.id);",
+                  "pm.test('Se creó service type', function () { pm.expect(jsonData.id).to.be.a('string'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/rental_events/", "host": ["{{baseUrl}}"], "path": ["api", "rental_events", ""] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"_id\": 1,\n  \"rental_id\": \"{{rentalId}}\",\n  \"event_type\": \"RETURNED\",\n \"note\": \"Se cambió el motor\",\n \"source\": \"WEB\",\n \"created_at\": 2023-01-01\n}"
+            }
+          }
+        },
+        {
+          "name": "Get rental events by id (Auth) - GET /api/rental_events/:id",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/rental_events/{{rentalEventId}}/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rental_events", "{{rentalEventId}}", ""]
+            }
+          }
+        },
+        {
+          "name": "Patch rental event (Auth) - PATCH /api/rental_events/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/rental_events/{{rentalEventId}}/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rental_events", "{{rentalEventId}}", ""]
+            },
+            "body": { "mode": "raw", "raw": "{\n  \"_id\": 1,\n  \"rental_id\": \"{{rentalId}}\",\n  \"event_type\": \"RETURNED\",\n \"note\": \"Se cambió el motor\",\n \"source\": \"WEB\",\n \"created_at\": 2023-01-01\n}" }
+          }
+        },
+        {
+          "name": "Delete rental events (Auth) - DELETE /api/rental_events/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/rental_events/{{rentalEventId}}/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rental_events", "{{rentalEventId}}", ""]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Mongo - fleet_logs",
+      "item": [
+        {
+          "name": "List fleet logs (Auth) - GET /api/fleet_logs/",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/fleet_logs/", "host": ["{{baseUrl}}"], "path": ["api", "fleet_logs", ""] }
+          }
+        },
+        {
+          "name": "Create fleet logs (Auth) - POST /api/fleet_logs/ (save fleetLogId)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let jsonData = {};",
+                  "try { jsonData = pm.response.json(); } catch (e) {}",
+                  "if (jsonData.id) pm.collectionVariables.set('fleetLogId', jsonData.id);",
+                  "pm.test('Se creó fleet logs', function () { pm.expect(jsonData.id).to.be.a('string'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/fleet_logs/", "host": ["{{baseUrl}}"], "path": ["api", "fleet_logs", ""] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"_id\": 1,\n  \"id_vehiculo\": \"{{vehiculoId}}\",\n  \"action\": \"UPDATED\",\n \"notes\": \"Se cambió filtro\",\n \"source\": \"SYSTEM\",\n \"created_at\": 2023-01-01\n}"
+            }
+          }
+        },
+        {
+          "name": "Get fleet log by id (Auth) - GET /api/fleet_logs/:id",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/fleet_logs/{{fleetLogId}}/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "fleet_logs", "{{fleetLogId}}", ""]
+            }
+          }
+        },
+        {
+          "name": "Patch fleet log (Auth) - PATCH /api/fleet_logs/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/fleet_logs/{{fleetLogId}}/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "fleet_logs", "{{fleetLogId}}", ""]
+            },
+            "body": { "mode": "raw", "raw": "{\n  \"_id\": 1,\n  \"vehicle_id\": \"{{vehicleId}}\",\n  \"action\": \"UPDATED\",\n \"notes\": \"Se cambió filtro\",\n \"source\": \"SYSTEM\",\n \"created_at\": 2023-01-01\n}" }
+          }
+        },
+        {
+          "name": "Delete fleet log (Auth) - DELETE /api/fleet_logs/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/fleet_logs/{{fleetLogId}}/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "fleet_logs", "{{fleetLogId}}", ""]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
